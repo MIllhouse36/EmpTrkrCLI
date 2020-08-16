@@ -7,13 +7,14 @@ const connection = mysql.createConnection({
   password: "yourRootPassword",
   database: "employee_trackerdb"
 });
-
+// viewqueries
+//====================================
 const allEmployees = () => {
   console.log("Displaying all Employees...\n");
   connection.query("SELECT id, CONCAT(first_name,' ',last_name) AS Employees FROM Employees ", (err, res) => {
     if (err) throw err;
     console.table(res);
-    start();
+    viewQuestions();
   })
 };
 
@@ -22,7 +23,7 @@ const byDepartment = () => {
   connection.query("SELECT name AS department, CONCAT(first_name,' ',last_name) AS Employees FROM Roles INNER JOIN Departments ON Roles.department_id = Departments.id INNER JOIN Employees ON Roles.id = Employees.role_id ORDER BY department", (err, res) => {
     if (err) throw err;
     console.table(res);
-    start();
+    viewQuestions();
   })
 };
 
@@ -31,19 +32,20 @@ const byRole = () => {
   connection.query("SELECT title, salary,  CONCAT(first_name,' ',last_name) AS Employees FROM Roles INNER JOIN Departments ON Roles.department_id = Departments.id INNER JOIN Employees ON Roles.id = Employees.role_id ORDER BY title", (err, res) => {
     if (err) throw err;
     console.table(res);
-    start();
+    viewQuestions();
   })
 };
 
 const byManager = () => {
   console.log("Displaying all Employees by Manager...\n");
-  connection.query("SELECT CONCAT( m.first_name,', ',m.last_name) AS Manager, CONCAT( e.first_name,', ',e.last_name) AS 'Employees' FROM Employees e INNER JOIN Employees m ON m.id = e.manager_id ORDER BY Manager", (err, res) => {
+  connection.query("SELECT CONCAT( m.first_name,', ',m.last_name) AS Manager, CONCAT( e.first_name,', ',e.last_name) AS 'Employees' FROM Employees e LEFT JOIN Employees m ON m.id = e.manager_id ORDER BY Manager", (err, res) => {
     if (err) throw err;
     console.table(res)
-    start();
+    viewQuestions();
   })
 };
-
+// addqueries
+//====================================
 const addEmployee = () => {
   connection.query("SELECT title, Roles.id AS Role, salary, Employees.id AS EmployeeNUm, CONCAT(first_name,' ',last_name) AS Employees FROM Roles INNER JOIN Employees ON Roles.id = Employees.role_id", (err, res) => {
     if (err) throw err;
@@ -213,7 +215,6 @@ const addDepartment = () => {
 
   ]).then((answers) => {
     console.log("adding New Department...\n");
-    console.log(answers.Department)
     connection.query(
       `INSERT INTO Departments SET ?`, answers, (err) => {
         if (err) throw err;
@@ -222,7 +223,8 @@ const addDepartment = () => {
     );
   });
 };
-
+// removequeries
+//====================================
 const removeEmployee = () => {
   connection.query("SELECT * FROM Employees", (err, res) => {
     if (err) throw err;
@@ -254,7 +256,7 @@ const removeEmployee = () => {
       console.log("Deleting role...\n");
       connection.query("DELETE FROM Employees WHERE id = ?", [chosenEmployee], (err) => {
         if (err) throw err;
-        start();
+        removeQuestions();
       }
       );
     });
@@ -291,13 +293,51 @@ const removeRole = () => {
       console.log("Deleting role...\n");
       connection.query("DELETE FROM Roles WHERE id = ?", [chosenRole], (err) => {
         if (err) throw err;
-        start();
+        removeQuestions();
       }
       );
     });
   })
 };
 
+const removeDepartment = () => {
+  connection.query("SELECT * FROM Departments", (err, res) => {
+    if (err) throw err;
+    inquirer.prompt([
+      {
+        name: "choice",
+        type: "rawlist",
+        choices: function () {
+          let choiceArray = [];
+          for (let i = 0; i < res.length; i++) {
+            if (res[i].name && !choiceArray.includes(`${res[i].name}`)) {
+              choiceArray.push(`${res[i].name}`);
+            }
+          }
+          return choiceArray;
+        },
+        message: "Which department are you Deleting?"
+      },
+
+    ]).then((answers) => {
+      let chosenDepartment;
+      for (let i = 0; i < res.length; i++) {
+        if (`${res[i].name}` === answers.choice) {
+          chosenDepartment = res[i].id;
+        }
+      }
+      console.log("Deleting role...\n");
+      connection.query("DELETE FROM Departments WHERE id = ?", [chosenDepartment], (err) => {
+        if (err) throw err;
+        removeQuestions();
+      }
+      );
+    });
+  })
+};
+
+// updatequeries
+//====================================
 const updateRoleDept = () => {
   connection.query("SELECT title, Roles.id  AS rID, Departments.id AS eID, name FROM Roles RIGHT JOIN Departments ON Roles.id = Departments.id UNION SELECT title, Roles.id  AS rID, Departments.id AS eID, name FROM Roles LEFT JOIN Departments ON Roles.id = Departments.id", (err, res) => {
     console.log(res)
@@ -459,12 +499,13 @@ const updateManager = () => {
 
       for (let i = 0; i < res.length; i++) {
         if (`${res[i].first_name} ${res[i].last_name}` === answers.choice) {
-          chosenManager = res[i].id;
-        }
-        if (`${res[i].first_name} ${res[i].last_name}` === answers.choiceE) {
           chosenEmployee = res[i].id;
         }
+        if (`${res[i].first_name} ${res[i].last_name}` === answers.choiceE) {
+         chosenManager = res[i].id;
+        }
       }
+      console.log(chosenManager)
       console.log("Updating Manager...\n");
       connection.query("UPDATE Employees SET ? WHERE ?",
         [{ manager_id: chosenManager }, { id: chosenEmployee }],
@@ -478,18 +519,12 @@ const updateManager = () => {
   })
 
 };
-
-
-
-connection.connect(err => {
-  if (err) throw err;
-  start();
-});
-
+// questions
+//====================================
 const viewQuestions = ()=> {
   inquirer.prompt([
     {
-    name: "choice",
+      name: "choice",
       type: "list",
       message: "What would you like to do?",
       choices: [
@@ -526,10 +561,11 @@ const viewQuestions = ()=> {
     }
   })
 };
+
 const addQuestions = ()=> {
   inquirer.prompt([
     {
-    name: "choice",
+      name: "choice",
       type: "list",
       message: "What would you like to do?",
       choices: [
@@ -566,10 +602,45 @@ const addQuestions = ()=> {
     }
   })
 };
+
+const updateQuestions = ()=> {
+  inquirer.prompt([
+    {
+      name: "choice",
+      type: "list",
+      message: "What would you like to do?",
+      choices: [
+        "Update employee role",
+        "Update employee manager",
+        "BACK"
+      ]
+    }
+  ]).then((answers) => {
+    switch (answers.choice) {
+      case "Update role department": {
+        updateRoleDept();
+        break;
+      }
+      case "Update employee role": {
+        updateEmployeeRole();
+        break;
+      }
+      case "Update employee manager": {
+        updateManager();
+        break;
+      }
+      case "BACK": {
+        start();
+        break;
+      }
+    }
+  })
+};
+
 const removeQuestions = ()=> {
   inquirer.prompt([
     {
-    name: "choice",
+      name: "choice",
       type: "list",
       message: "What would you like to do?",
       choices: [
@@ -600,7 +671,9 @@ const removeQuestions = ()=> {
     }
   })
 };
-function start() {
+//initialization
+//====================================
+const start = () =>{
   inquirer.prompt([
     {
       name: "mainmenu",
@@ -609,10 +682,8 @@ function start() {
       choices: [
         "VIEW",
         "ADD",
+        "UPDATE",
         "REMOVE",
-        "Update role department",
-        "Update employee role",
-        "Update employee manager",
         "EXIT"
       ]
     }
@@ -630,19 +701,10 @@ function start() {
         removeQuestions();
         break;
       }
-
-      case "Update role department": {
-        updateRoleDept();
+      case "UPDATE": {
+        updateQuestions();
         break;
-      }
-      case "Update employee role": {
-        updateEmployeeRole();
-        break;
-      }
-      case "Update employee manager": {
-        updateManager();
-        break;
-      }
+      }      
       case "EXIT": {
         connection.end();
         break;
@@ -651,5 +713,9 @@ function start() {
   })
 };
 
+connection.connect(err => {
+  if (err) throw err;
+  start();
+});
 
 // departments: Sales, Engineering, Finance, Legal, Management'
