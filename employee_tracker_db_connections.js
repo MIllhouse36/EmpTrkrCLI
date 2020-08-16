@@ -9,18 +9,28 @@ const connection = mysql.createConnection({
 });
 const allEmployees = ()=>{
   console.log("Displaying all Employees...\n");
-  connection.query("SELECT * FROM Employees ", (err, res) =>{
+  connection.query("SELECT id, CONCAT(first_name,' ',last_name) AS Employees FROM Employees ", (err, res) =>{
     if (err) throw err;
-    console.table(res)
+    console.table(res);
+    start();
   })
 }
 
 const byDepartment =()=>{
   console.log("Displaying all Employees by Departments...\n");
-  connection.query("SELECT name, first_name, last_name FROM Employees INNER JOIN Departments ON Employees.role_id = Departments.id", (err, res) =>{
+  connection.query("SELECT name AS department, CONCAT(first_name,' ',last_name) AS Employees FROM Roles INNER JOIN Departments ON Roles.department_id = Departments.id INNER JOIN Employees ON Roles.id = Employees.role_id ORDER BY department", (err, res) =>{
     if (err) throw err;
-    console.table(res)
-   
+    console.table(res);
+    start();
+  })
+}
+
+const byRole = ()=>{
+  console.log("Displaying all Roles...\n");
+  connection.query("SELECT title, salary,  CONCAT(first_name,' ',last_name) AS Employees FROM Roles INNER JOIN Departments ON Roles.department_id = Departments.id INNER JOIN Employees ON Roles.id = Employees.role_id ORDER BY title", (err, res) =>{
+    if (err) throw err;
+    console.table(res);
+    start();
   })
 }
 
@@ -29,71 +39,95 @@ const byManager =()=>{
   connection.query("SELECT CONCAT( m.first_name,', ',m.last_name) AS Manager, CONCAT( e.first_name,', ',e.last_name) AS 'Employees' FROM Employees e INNER JOIN Employees m ON m.id = e.manager_id ORDER BY Manager", (err, res) =>{
     if (err) throw err;
     console.table(res)
-   
+   start();
   })
 }
+
 const addEmployee = ()=>{
+  connection.query("SELECT title, Roles.id AS Role, salary, Employees.id AS EmployeeNUm, CONCAT(first_name,' ',last_name) AS Employees FROM Roles INNER JOIN Employees ON Roles.id = Employees.role_id",(err, res)=>{
+    if (err) throw err;
+    console.log(res)
   inquirer.prompt([
     {
-      name: "first",
+      name: "first_name",
       type: "input",
       message: "Enter First Name"
     },
     {
-      name: "last",
+      name: "last_name",
       type: "input",
       message: "Enter Last Name"
     },
     {
-      name: "roleID",
-      type: "input",
-      message: "Enter role id",
-      validate: (value)=>{
-        if(isNaN(value) === false){
-          return true;
+      name: "role_id",
+      type: "rawlist",
+      choices: function(){
+        let choiceArray = [];
+        for (let i = 0; i < res.length; i++) {
+          if(res[i].title && !choiceArray.includes(`${res[i].title}`)){
+
+            choiceArray.push(`${res[i].title}`);
+          }
         }
-        return false;
+        console.log(choiceArray);
+        return choiceArray;
       }
     },
     {
-      name: "managerID",
-      type: "input",
+      name: "manager_id",
+      type: "rawlist",
       message: "Enter Manager id",
-      validate: (value)=>{
-        if(isNaN(value) === false && value !== 0){
-          return true;
+      choices: function(){
+        let choiceArray = [];
+        for (let i = 0; i < res.length; i++) {
+          if(res[i].Employees && !choiceArray.includes(`${res[i].Employees}`)){
+
+            choiceArray.push(`${res[i].Employees}`);
+          }
         }
-        return false;
+        console.log(choiceArray);
+        return choiceArray;
       }
     }
 
   ]).then((answers)=>{
+
+    for (let i = 0; i < res.length; i++) {
+      if(`${res[i].title}`  === answers.role_id){
+        chosenRole = res[i].Role;
+      }
+      if(`${res[i].Employees}`  === answers.manager_id){
+        chosenEmployee = res[i].EmployeeNUm;
+      }
+    }
+   
     console.log("add Employee info...\n");
     connection.query(
-      `INSERT INTO Employees SET ?`,
-      { 
-        first_name: answers.first,
-        last_name: answers.last,
-        role_id: answers.roleID,
-        manager_id: answers.managerID
-      },
-      (err) => {
+      `INSERT INTO Employees SET ?`, 
+      {
+        first_name: answers.first_name,
+        last_name: answers.last_name,
+        role_id: chosenRole,
+        manager_id: chosenEmployee
+
+      }, (err) => {
         if (err) throw err;
       start();
       }
     );
+  });
   });
 };
 
 const addManager = ()=>{
   inquirer.prompt([
     {
-      name: "first",
+      name: "first_name",
       type: "input",
       message: "Enter First Name"
     },
     {
-      name: "last",
+      name: "last_name",
       type: "input",
       message: "Enter Last Name"
     }
@@ -102,8 +136,7 @@ const addManager = ()=>{
     connection.query(
       `INSERT INTO Employees SET ?`,
       { 
-        first_name: answers.first,
-        last_name: answers.last,
+        ...answers,
         role_id: 1,
       },
       (err) => {
@@ -115,44 +148,64 @@ const addManager = ()=>{
 };
 
 const addRole = ()=>{
+  connection.query("SELECT * FROM Departments",(err, res)=>{
+    if (err) throw err;
+  
   inquirer.prompt([
     {
-      name: "Title",
+      name: "title",
       type: "input",
       message: "Enter Title"
     },
     {
-      name: "Salary",
+      name: "salary",
       type: "input",
       message: "Enter Salary"
     },
     {
-      name: "Department",
-      type: "input",
-      message: "Enter Department id"
+      name: "choice",
+      type: "rawlist",
+      choices: function(){
+        let choiceArray = [];
+        for (let i = 0; i < res.length; i++) {
+          if(res[i].name && !choiceArray.includes(`${res[i].name}`)){
+
+            choiceArray.push(`${res[i].name}`);
+          }
+        }
+        console.log(choiceArray);
+        return choiceArray;
+      },
+      message: "Which department does this Employee belong to?"
     }
-  ]).then((answers)=>{
-    
+  
+  ])
+.then((answers)=>{
+    for (let i = 0; i < res.length; i++) {
+     
+      if(`${res[i].name}`  === answers.choice){
+        chosenDepartment = res[i].id;
+      }
+    }
     console.log("adding Role...\n");
     connection.query(
-      `INSERT INTO Roles SET ?`,
-      { 
-        title: answers.Title,
-        salary: answers.Salary,
-        department_id: answers.Department,
-      },
-      (err) => {
+      `INSERT INTO Roles SET ?`, { 
+        title: answers.title,
+        salary: answers.salary,
+        Department_id: chosenDepartment,
+      }, (err) => {
         if (err) throw err;
       start();
       }
     );
   });
+});
 };
 
 const addDepartment = ()=>{
   inquirer.prompt([
     {
-      name: "Department",
+      name: "name",
       type: "input",
       message: "Enter Department Name"
     }
@@ -161,37 +214,272 @@ const addDepartment = ()=>{
     console.log("adding New Department...\n");
     console.log(answers.Department)
     connection.query(
-      `INSERT INTO Departments SET ?`,
-      { 
-        name: answers.Department,
-      },
-      (err) => {
-        if (err) throw err;
+      `INSERT INTO Departments SET ?`, answers, (err) => {
+      if (err) throw err;
       start();
       }
     );
   });
 };
-
 
 const removeEmployee = ()=>{
+  connection.query("SELECT * FROM Employees",(err, res)=>{
+    if (err) throw err;
   inquirer.prompt([
     {
-      name: "id",
-      type: "input",
-      message: "Enter id of terminated employee"
+      name: "choice",
+      type: "rawlist",
+      choices: function(){
+        let choiceArray = [];
+        for (let i = 0; i < res.length; i++) {
+          if(res[i].first_name && !choiceArray.includes(`${res[i].first_name} ${res[i].last_name}`)){
+
+            choiceArray.push(`${res[i].first_name} ${res[i].last_name}`);
+          }
+        }
+        console.log(choiceArray);
+        return choiceArray;
+      },
+      message: "Choose employee"
     }
   ]).then((answers)=>{
-    console.log("Delelting employee...\n");
-    connection.query("DELETE FROM Employees WHERE id = ?",
-    [answers.id],
-      (err) => {
-        if (err) throw err;
+    let chosenEmployee;
+    for (let i = 0; i < res.length; i++) {
+    if(`${res[i].first_name} ${res[i].last_name}`  === answers.choice){
+      chosenEmployee = res[i].id;
+    }
+  }
+  console.log(chosenEmployee)
+  console.log("Deleting role...\n");
+  connection.query("DELETE FROM Employees WHERE id = ?", [chosenEmployee],(err) => {
+      if (err) throw err;
       start();
-      }
+    }
     );
   });
+})
 };
+
+const removeRole = ()=>{
+  connection.query("SELECT * FROM Roles",(err, res)=>{
+    if (err) throw err;
+  inquirer.prompt([
+    {
+      name: "choice",
+      type: "rawlist",
+      choices: function(){
+        let choiceArray = [];
+        for (let i = 0; i < res.length; i++) {
+          if(res[i].title && !choiceArray.includes(`${res[i].title}`)){
+            choiceArray.push(`${res[i].title}`);
+          }
+        }
+        return choiceArray;
+      },
+      message:"Which role are you Deleting?"
+    },
+    
+  ]).then((answers)=>{
+    let chosenRole;
+    for (let i = 0; i < res.length; i++) {
+    if(`${res[i].title}` === answers.choice){
+      chosenRole = res[i].id;
+    }
+  }
+  console.log(chosenRole)
+  console.log("Deleting role...\n");
+  connection.query("DELETE FROM Roles WHERE id = ?", [chosenRole],(err) => {
+      if (err) throw err;
+      start();
+    }
+    );
+  });
+})
+};
+
+const updateRoleDept = ()=>{
+  connection.query("SELECT title, Roles.id  AS rID, Departments.id AS eID, name FROM Roles RIGHT JOIN Departments ON Roles.id = Departments.id UNION SELECT title, Roles.id  AS rID, Departments.id AS eID, name FROM Roles LEFT JOIN Departments ON Roles.id = Departments.id",(err, res)=>{
+    console.log(res)
+  inquirer.prompt([
+    {
+      name: "choice",
+      type: "rawlist",
+      choices: function(){
+        let choiceArray = [];
+        for (let i = 0; i < res.length; i++) {
+          if(res[i].title && !choiceArray.includes(`${res[i].title}`)){
+
+            choiceArray.push(`${res[i].title}`);
+          }
+        }
+        console.log(choiceArray);
+        return choiceArray;
+      },
+      message:"Which role are you switching?"
+    },
+    {
+      name: "choiceE",
+      type: "rawlist",
+      choices: function(){
+        let choiceArray = [];
+        for (let i = 0; i < res.length; i++) {
+          if(res[i].name && !choiceArray.includes(`${res[i].name}`)){
+
+            choiceArray.push(`${res[i].name}`);
+          }
+        }
+        console.log(choiceArray);
+        return choiceArray;
+      },
+      message: "Which department does this role belong to?"
+    }
+  ]).then((answers)=>{
+    let chosenRole;
+    let chosenDepartment;
+    
+    for (let i = 0; i < res.length; i++) {
+    if(`${res[i].title}`  === answers.choice){
+      chosenRole = res[i].rID;
+    }
+    if(`${res[i].name}`  === answers.choiceE){
+      chosenDepartment = res[i].eID;
+    }
+  }
+  console.log({chosenRole});
+  console.log({chosenDepartment});
+  console.log("Updating role...\n");
+  connection.query("UPDATE Roles SET ? WHERE ?",
+  [{ id: chosenRole},{department_id: chosenDepartment}],
+    (err) => {
+      if (err) throw err;
+      start();
+    }
+    );
+  });
+  if (err) throw err;
+})
+};
+
+const updateEmployeeRole = ()=>{
+  connection.query("SELECT title, Roles.id  AS rID, Employees.id AS eID, first_name, last_name FROM Roles RIGHT JOIN Employees ON Roles.id = Employees.role_id UNION SELECT title, Roles.id  AS rID, Employees.id AS eID, first_name, last_name FROM Roles LEFT JOIN Employees ON Roles.id = Employees.role_id",(err, res)=>{
+    console.log(res)
+  inquirer.prompt([
+    {
+      name: "choice",
+      type: "rawlist",
+      choices: function(){
+        let choiceArray = [];
+        for (let i = 0; i < res.length; i++) {
+          if(res[i].title && !choiceArray.includes(`${res[i].title}`)){
+
+            choiceArray.push(`${res[i].title}`);
+          }
+        }
+        console.log(choiceArray);
+        return choiceArray;
+      },
+      message:"Which role is your employee switching to?"
+    },
+    {
+      name: "choiceE",
+      type: "rawlist",
+      choices: function(){
+        let choiceArray = [];
+        for (let i = 0; i < res.length; i++) {
+          if(res[i].first_name && !choiceArray.includes(`${res[i].first_name} ${res[i].last_name}`)){
+
+            choiceArray.push(`${res[i].first_name} ${res[i].last_name}`);
+          }
+        }
+        console.log(choiceArray);
+        return choiceArray;
+      },
+      message: "Choose employee"
+    }
+  ]).then((answers)=>{
+    let chosenRole;
+    let chosenEmployee;
+    
+    for (let i = 0; i < res.length; i++) {
+    if(`${res[i].title}`  === answers.choice){
+      chosenRole = res[i].rID;
+    }
+    if(`${res[i].first_name} ${res[i].last_name}`  === answers.choiceE){
+      chosenEmployee = res[i].eID;
+    }
+  }
+  console.log({chosenRole});
+  console.log({chosenEmployee});
+  console.log("Updating role...\n");
+  connection.query("UPDATE Employees SET ? WHERE ?",
+  [{ role_id: chosenRole},{id: chosenEmployee}],
+    (err,res) => {
+      if (err) throw err;
+      start();
+    }
+    );
+  });
+  if (err) throw err;
+})
+};
+
+const updateManager = ()=>{
+  connection.query("SELECT * FROM Employees",(err, res)=>{
+    // console.log(res);
+  inquirer.prompt([
+    {
+      name: "choice",
+      type: "rawlist",
+      choices: function(){
+        let choiceArray = [];
+        for (let i = 0; i < res.length; i++) {
+          choiceArray.push(`${res[i].first_name} ${res[i].last_name}`);
+        }
+        console.log(choiceArray);
+        return choiceArray;
+      },
+      message:"Which manager is your employee switching to?"
+    },
+    {
+      name: "choiceE",
+      type: "rawlist",
+      choices: function(){
+        let choiceArray = [];
+        for (let i = 0; i < res.length; i++) {
+          choiceArray.push(`${res[i].first_name} ${res[i].last_name}`);
+        }
+        console.log(choiceArray);
+        return choiceArray;
+      },
+      message: "Enter id of the Employee you would like to update to"
+    }
+  ]).then((answers)=>{
+    let chosenManager;
+    let chosenEmployee;
+    
+    for (let i = 0; i < res.length; i++) {
+    if(`${res[i].first_name} ${res[i].last_name}`  === answers.choice){
+      chosenManager = res[i].id;
+    }
+    if(`${res[i].first_name} ${res[i].last_name}`  === answers.choiceE){
+      chosenEmployee = res[i].id;
+    }
+  }
+  console.log("Updating Manager...\n");
+  connection.query("UPDATE Employees SET ? WHERE ?",
+  [{ manager_id: chosenManager},{id: chosenEmployee}],
+    (err,res) => {
+      if (err) throw err;
+      start();
+    }
+  );
+  });
+  if (err) throw err;
+})
+
+};
+
+
 
 connection.connect(err => {
   if (err) throw err;
@@ -207,12 +495,16 @@ function start(){
         choices: [
             "View All Employees",
             "View all employees by department",
+            "View all employees by role",
             "View all employees by manager",
             "Add Employee",
             "Add Manager",
             "Add Role",
             "Add Department",
             "Remove employee",
+            "Remove role",
+            "Remove department",
+            "Update role department",
             "Update employee role",
             "Update employee manager",
             "EXIT"
@@ -226,6 +518,10 @@ function start(){
       }
       case "View all employees by department":{
         byDepartment();
+        break;
+      }
+      case "View all employees by role":{
+        byRole();
         break;
       }
       case "View all employees by manager":{
@@ -252,12 +548,25 @@ function start(){
         removeEmployee();
         break;
       }
+      case "Remove role":{
+        removeRole();
+        break;
+      }
+      case "Remove department":{
+        removeDepartment();
+        break;
+      }
+      
+      case "Update role department":{
+        updateRoleDept();
+        break;
+      }
       case "Update employee role":{
-        // updateEmployee();
+        updateEmployeeRole();
         break;
       }
       case "Update employee manager":{
-        // updateManager();
+        updateManager();
         break;
       }
       case "EXIT":{
