@@ -566,6 +566,40 @@ const addQuestions = ()=> {
     }
   })
 };
+const removeQuestions = ()=> {
+  inquirer.prompt([
+    {
+    name: "choice",
+      type: "list",
+      message: "What would you like to do?",
+      choices: [
+        "Remove employee",
+        "Remove role",
+        "Remove department",
+        "BACK"
+      ]
+    }
+  ]).then((answers) => {
+    switch (answers.choice) {
+      case "Remove employee": {
+        removeEmployee();
+        break;
+      }
+      case "Remove role": {
+        removeRole();
+        break;
+      }
+      case "Remove department": {
+        removeDepartment();
+        break;
+      }
+      case "BACK": {
+        start();
+        break;
+      }
+    }
+  })
+};
 function start() {
   inquirer.prompt([
     {
@@ -575,9 +609,7 @@ function start() {
       choices: [
         "VIEW",
         "ADD",
-        "Remove employee",
-        "Remove role",
-        "Remove department",
+        "REMOVE",
         "Update role department",
         "Update employee role",
         "Update employee manager",
@@ -594,16 +626,8 @@ function start() {
         addQuestions();
         break;
       }
-      case "Remove employee": {
-        removeEmployee();
-        break;
-      }
-      case "Remove role": {
-        removeRole();
-        break;
-      }
-      case "Remove department": {
-        removeDepartment();
+      case "REMOVE": {
+        removeQuestions();
         break;
       }
 
