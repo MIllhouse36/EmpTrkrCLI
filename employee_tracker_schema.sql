@@ -25,9 +25,9 @@ CREATE TABLE Employees (
   FOREIGN KEY(role_id) REFERENCES Roles(id) ON DELETE SET NULL,
   FOREIGN KEY(manager_id) REFERENCES Employees(id) ON DELETE SET NULL
 );
-SELECT * FROM Departments;
-SELECT * FROM Roles;
-SELECT * FROM Employees;
+-- SELECT * FROM Departments;
+-- SELECT * FROM Roles;
+-- SELECT * FROM Employees;
 
 INSERT INTO Departments (name)
 VALUES ("Management");

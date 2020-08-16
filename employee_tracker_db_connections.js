@@ -49,7 +49,7 @@ const byManager = () => {
 const addEmployee = () => {
   connection.query("SELECT title, Roles.id AS Role, salary, Employees.id AS EmployeeNUm, CONCAT(first_name,' ',last_name) AS Employees FROM Roles INNER JOIN Employees ON Roles.id = Employees.role_id", (err, res) => {
     if (err) throw err;
-    console.log(res)
+   
     inquirer.prompt([
       {
         name: "first_name",
@@ -64,6 +64,7 @@ const addEmployee = () => {
       {
         name: "role_id",
         type: "rawlist",
+        message: "Enter role",
         choices: function () {
           let choiceArray = [];
           for (let i = 0; i < res.length; i++) {
@@ -72,7 +73,7 @@ const addEmployee = () => {
               choiceArray.push(`${res[i].title}`);
             }
           }
-          console.log(choiceArray);
+          
           return choiceArray;
         }
       },
@@ -88,7 +89,7 @@ const addEmployee = () => {
               choiceArray.push(`${res[i].Employees}`);
             }
           }
-          console.log(choiceArray);
+          // console.log(choiceArray);
           return choiceArray;
         }
       }
@@ -115,7 +116,7 @@ const addEmployee = () => {
 
         }, (err) => {
           if (err) throw err;
-          start();
+          addQuestions();
         }
       );
     });
@@ -144,7 +145,7 @@ const addManager = () => {
       },
       (err) => {
         if (err) throw err;
-        start();
+        addQuestions();
       }
     );
   });
@@ -176,7 +177,7 @@ const addRole = () => {
               choiceArray.push(`${res[i].name}`);
             }
           }
-          console.log(choiceArray);
+          
           return choiceArray;
         },
         message: "Which department does this Employee belong to?"
@@ -198,7 +199,7 @@ const addRole = () => {
           Department_id: chosenDepartment,
         }, (err) => {
           if (err) throw err;
-          start();
+          addQuestions();
         }
         );
       });
@@ -218,7 +219,7 @@ const addDepartment = () => {
     connection.query(
       `INSERT INTO Departments SET ?`, answers, (err) => {
         if (err) throw err;
-        start();
+        addQuestions();
       }
     );
   });
@@ -252,8 +253,7 @@ const removeEmployee = () => {
           chosenEmployee = res[i].id;
         }
       }
-      console.log(chosenEmployee)
-      console.log("Deleting role...\n");
+      console.log("Deleting Employee...\n");
       connection.query("DELETE FROM Employees WHERE id = ?", [chosenEmployee], (err) => {
         if (err) throw err;
         removeQuestions();
@@ -289,7 +289,6 @@ const removeRole = () => {
           chosenRole = res[i].id;
         }
       }
-      console.log(chosenRole)
       console.log("Deleting role...\n");
       connection.query("DELETE FROM Roles WHERE id = ?", [chosenRole], (err) => {
         if (err) throw err;
@@ -326,7 +325,7 @@ const removeDepartment = () => {
           chosenDepartment = res[i].id;
         }
       }
-      console.log("Deleting role...\n");
+      console.log("Deleting Department...\n");
       connection.query("DELETE FROM Departments WHERE id = ?", [chosenDepartment], (err) => {
         if (err) throw err;
         removeQuestions();
@@ -338,76 +337,76 @@ const removeDepartment = () => {
 
 // updatequeries
 //====================================
-const updateRoleDept = () => {
-  connection.query("SELECT title, Roles.id  AS rID, Departments.id AS eID, name FROM Roles RIGHT JOIN Departments ON Roles.id = Departments.id UNION SELECT title, Roles.id  AS rID, Departments.id AS eID, name FROM Roles LEFT JOIN Departments ON Roles.id = Departments.id", (err, res) => {
-    console.log(res)
-    inquirer.prompt([
-      {
-        name: "choice",
-        type: "rawlist",
-        choices: function () {
-          let choiceArray = [];
-          for (let i = 0; i < res.length; i++) {
-            if (res[i].title && !choiceArray.includes(`${res[i].title}`)) {
+// const updateRoleDept = () => {
+//   connection.query("SELECT title, Roles.id  AS rID, Departments.id AS eID, name FROM Roles RIGHT JOIN Departments ON Roles.id = Departments.id UNION SELECT title, Roles.id  AS rID, Departments.id AS eID, name FROM Roles LEFT JOIN Departments ON Roles.id = Departments.id", (err, res) => {
+//     console.log(res)
+//     inquirer.prompt([
+//       {
+//         name: "choice",
+//         type: "rawlist",
+//         choices: function () {
+//           let choiceArray = [];
+//           for (let i = 0; i < res.length; i++) {
+//             if (res[i].title && !choiceArray.includes(`${res[i].title}`)) {
 
-              choiceArray.push(`${res[i].title}`);
-            }
-          }
-          console.log(choiceArray);
-          return choiceArray;
-        },
-        message: "Which role are you switching?"
-      },
-      {
-        name: "choiceE",
-        type: "rawlist",
-        choices: function () {
-          let choiceArray = [];
-          for (let i = 0; i < res.length; i++) {
-            if (res[i].name && !choiceArray.includes(`${res[i].name}`)) {
+//               choiceArray.push(`${res[i].title}`);
+//             }
+//           }
+//           console.log(choiceArray);
+//           return choiceArray;
+//         },
+//         message: "Which role are you switching?"
+//       },
+//       {
+//         name: "choiceE",
+//         type: "rawlist",
+//         choices: function () {
+//           let choiceArray = [];
+//           for (let i = 0; i < res.length; i++) {
+//             if (res[i].name && !choiceArray.includes(`${res[i].name}`)) {
 
-              choiceArray.push(`${res[i].name}`);
-            }
-          }
-          console.log(choiceArray);
-          return choiceArray;
-        },
-        message: "Which department does this role belong to?"
-      }
-    ]).then((answers) => {
-      let chosenRole;
-      let chosenDepartment;
+//               choiceArray.push(`${res[i].name}`);
+//             }
+//           }
+//           console.log(choiceArray);
+//           return choiceArray;
+//         },
+//         message: "Which department does this role belong to?"
+//       }
+//     ]).then((answers) => {
+//       let chosenRole;
+//       let chosenDepartment;
 
-      for (let i = 0; i < res.length; i++) {
-        if (`${res[i].title}` === answers.choice) {
-          chosenRole = res[i].rID;
-        }
-        if (`${res[i].name}` === answers.choiceE) {
-          chosenDepartment = res[i].eID;
-        }
-      }
-      console.log({ chosenRole });
-      console.log({ chosenDepartment });
-      console.log("Updating role...\n");
-      connection.query("UPDATE Roles SET ? WHERE ?",
-        [{ id: chosenRole }, { department_id: chosenDepartment }],
-        (err) => {
-          if (err) throw err;
-          start();
-        }
-      );
-    });
-    if (err) throw err;
-  })
-};
+//       for (let i = 0; i < res.length; i++) {
+//         if (`${res[i].title}` === answers.choice) {
+//           chosenRole = res[i].rID;
+//         }
+//         if (`${res[i].name}` === answers.choiceE) {
+//           chosenDepartment = res[i].eID;
+//         }
+//       }
+//       console.log({ chosenRole });
+//       console.log({ chosenDepartment });
+//       console.log("Updating role...\n");
+//       connection.query("UPDATE Roles SET ? WHERE ?",
+//         [{ id: chosenRole }, { department_id: chosenDepartment }],
+//         (err) => {
+//           if (err) throw err;
+//           start();
+//         }
+//       );
+//     });
+//     if (err) throw err;
+//   })
+// };
 
 const updateEmployeeRole = () => {
   connection.query("SELECT title, Roles.id  AS rID, Employees.id AS eID, first_name, last_name FROM Roles RIGHT JOIN Employees ON Roles.id = Employees.role_id UNION SELECT title, Roles.id  AS rID, Employees.id AS eID, first_name, last_name FROM Roles LEFT JOIN Employees ON Roles.id = Employees.role_id", (err, res) => {
-    console.log(res)
     inquirer.prompt([
       {
         name: "choice",
         type: "rawlist",
+        message: "Which role is your employee switching to?",
         choices: function () {
           let choiceArray = [];
           for (let i = 0; i < res.length; i++) {
@@ -416,14 +415,15 @@ const updateEmployeeRole = () => {
               choiceArray.push(`${res[i].title}`);
             }
           }
-          console.log(choiceArray);
+          
           return choiceArray;
-        },
-        message: "Which role is your employee switching to?"
+        }
+        
       },
       {
         name: "choiceE",
         type: "rawlist",
+        message: "Choose employee",
         choices: function () {
           let choiceArray = [];
           for (let i = 0; i < res.length; i++) {
@@ -432,10 +432,10 @@ const updateEmployeeRole = () => {
               choiceArray.push(`${res[i].first_name} ${res[i].last_name}`);
             }
           }
-          console.log(choiceArray);
+          
           return choiceArray;
         },
-        message: "Choose employee"
+        
       }
     ]).then((answers) => {
       let chosenRole;
@@ -449,14 +449,14 @@ const updateEmployeeRole = () => {
           chosenEmployee = res[i].eID;
         }
       }
-      console.log({ chosenRole });
-      console.log({ chosenEmployee });
+      // console.log({ chosenRole });
+      // console.log({ chosenEmployee });
       console.log("Updating role...\n");
       connection.query("UPDATE Employees SET ? WHERE ?",
         [{ role_id: chosenRole }, { id: chosenEmployee }],
         (err) => {
           if (err) throw err;
-          start();
+          updateQuestions();
         }
       );
     });
@@ -470,33 +470,32 @@ const updateManager = () => {
       {
         name: "choice",
         type: "rawlist",
+        message: "Which manager is your employee switching to?",
         choices: function () {
           let choiceArray = [];
           for (let i = 0; i < res.length; i++) {
             choiceArray.push(`${res[i].first_name} ${res[i].last_name}`);
           }
-          console.log(choiceArray);
           return choiceArray;
-        },
-        message: "Which manager is your employee switching to?"
+        }
+        
       },
       {
         name: "choiceE",
         type: "rawlist",
+        message: "Enter Employee",
         choices: function () {
           let choiceArray = [];
           for (let i = 0; i < res.length; i++) {
             choiceArray.push(`${res[i].first_name} ${res[i].last_name}`);
           }
-          console.log(choiceArray);
           return choiceArray;
-        },
-        message: "Enter Employee"
+        }
+        
       }
     ]).then((answers) => {
       let chosenManager;
       let chosenEmployee;
-
       for (let i = 0; i < res.length; i++) {
         if (`${res[i].first_name} ${res[i].last_name}` === answers.choice) {
           chosenEmployee = res[i].id;
@@ -505,19 +504,17 @@ const updateManager = () => {
          chosenManager = res[i].id;
         }
       }
-      console.log(chosenManager)
       console.log("Updating Manager...\n");
       connection.query("UPDATE Employees SET ? WHERE ?",
         [{ manager_id: chosenManager }, { id: chosenEmployee }],
         (err) => {
           if (err) throw err;
-          start();
+          updateQuestions();
         }
       );
     });
     if (err) throw err;
   })
-
 };
 // questions
 //====================================
@@ -617,10 +614,10 @@ const updateQuestions = ()=> {
     }
   ]).then((answers) => {
     switch (answers.choice) {
-      case "Update role department": {
-        updateRoleDept();
-        break;
-      }
+      // case "Update role department": {
+      //   updateRoleDept();
+      //   break;
+      // }
       case "Update employee role": {
         updateEmployeeRole();
         break;
