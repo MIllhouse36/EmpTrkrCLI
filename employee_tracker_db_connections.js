@@ -49,7 +49,7 @@ const byManager = () => {
 const addEmployee = () => {
   connection.query("SELECT title, Roles.id AS Role, salary, Employees.id AS EmployeeNUm, CONCAT(first_name,' ',last_name) AS Employees FROM Roles INNER JOIN Employees ON Roles.id = Employees.role_id", (err, res) => {
     if (err) throw err;
-   
+
     inquirer.prompt([
       {
         name: "first_name",
@@ -73,7 +73,7 @@ const addEmployee = () => {
               choiceArray.push(`${res[i].title}`);
             }
           }
-          
+
           return choiceArray;
         }
       },
@@ -177,7 +177,7 @@ const addRole = () => {
               choiceArray.push(`${res[i].name}`);
             }
           }
-          
+
           return choiceArray;
         },
         message: "Which department does this Employee belong to?"
@@ -415,10 +415,10 @@ const updateEmployeeRole = () => {
               choiceArray.push(`${res[i].title}`);
             }
           }
-          
+
           return choiceArray;
         }
-        
+
       },
       {
         name: "choiceE",
@@ -432,10 +432,10 @@ const updateEmployeeRole = () => {
               choiceArray.push(`${res[i].first_name} ${res[i].last_name}`);
             }
           }
-          
+
           return choiceArray;
         },
-        
+
       }
     ]).then((answers) => {
       let chosenRole;
@@ -478,7 +478,7 @@ const updateManager = () => {
           }
           return choiceArray;
         }
-        
+
       },
       {
         name: "choiceE",
@@ -491,7 +491,7 @@ const updateManager = () => {
           }
           return choiceArray;
         }
-        
+
       }
     ]).then((answers) => {
       let chosenManager;
@@ -501,7 +501,7 @@ const updateManager = () => {
           chosenEmployee = res[i].id;
         }
         if (`${res[i].first_name} ${res[i].last_name}` === answers.choiceE) {
-         chosenManager = res[i].id;
+          chosenManager = res[i].id;
         }
       }
       console.log("Updating Manager...\n");
@@ -518,7 +518,7 @@ const updateManager = () => {
 };
 // questions
 //====================================
-const viewQuestions = ()=> {
+const viewQuestions = () => {
   inquirer.prompt([
     {
       name: "choice",
@@ -550,7 +550,7 @@ const viewQuestions = ()=> {
         byManager();
         break;
       }
-      
+
       case "BACK": {
         start();
         break;
@@ -559,7 +559,7 @@ const viewQuestions = ()=> {
   })
 };
 
-const addQuestions = ()=> {
+const addQuestions = () => {
   inquirer.prompt([
     {
       name: "choice",
@@ -591,7 +591,7 @@ const addQuestions = ()=> {
         addDepartment();
         break;
       }
-      
+
       case "BACK": {
         start();
         break;
@@ -600,7 +600,7 @@ const addQuestions = ()=> {
   })
 };
 
-const updateQuestions = ()=> {
+const updateQuestions = () => {
   inquirer.prompt([
     {
       name: "choice",
@@ -634,7 +634,7 @@ const updateQuestions = ()=> {
   })
 };
 
-const removeQuestions = ()=> {
+const removeQuestions = () => {
   inquirer.prompt([
     {
       name: "choice",
@@ -670,7 +670,7 @@ const removeQuestions = ()=> {
 };
 //initialization
 //====================================
-const start = () =>{
+const start = () => {
   inquirer.prompt([
     {
       name: "mainmenu",
@@ -701,7 +701,7 @@ const start = () =>{
       case "UPDATE": {
         updateQuestions();
         break;
-      }      
+      }
       case "EXIT": {
         connection.end();
         break;
