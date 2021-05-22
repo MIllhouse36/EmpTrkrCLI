@@ -1,5 +1,5 @@
 
-# employeetracker app 
+# EmpTrkrCLI app 
 ## Table of Contents 
 [Descriptions](#Descriptions)
 
